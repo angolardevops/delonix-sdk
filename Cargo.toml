@@ -1,0 +1,20 @@
+[package]
+name = "delonix-sdk"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+description = "Cliente Rust oficial da API de gestão do Delonix Runtime (delonix-mgmt) — HTTP+JSON sobre unix socket."
+repository = "https://github.com/angolardevops/delonix-sdk"
+keywords = ["delonix", "runtime", "containers", "sdk"]
+categories = ["api-bindings"]
+
+[dependencies]
+tokio = { version = "1", features = ["rt", "net", "time"] }
+hyper = { version = "1", features = ["client", "http1"] }
+hyper-util = { version = "0.1", features = ["tokio"] }
+http-body-util = "0.1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["rt", "net", "time", "macros", "rt-multi-thread"] }
