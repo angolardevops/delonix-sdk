@@ -1,2 +1,6 @@
 /target
 Cargo.lock
+
+# Configuração local de ferramentas de agente (fica na máquina, não no repo).
+.claude/
+CLAUDE.md
