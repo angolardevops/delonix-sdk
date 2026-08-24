@@ -140,10 +140,7 @@ impl MgmtClient {
         tokio::time::timeout(self.timeout, exchange)
             .await
             .map_err(|_| {
-                SdkError::Transport(format!(
-                    "sem resposta em {} ms",
-                    self.timeout.as_millis()
-                ))
+                SdkError::Transport(format!("sem resposta em {} ms", self.timeout.as_millis()))
             })?
     }
 
@@ -169,10 +166,16 @@ impl MgmtClient {
     }
 
     /// `POST/DELETE <path>` de uma OPERAÇÃO → [`OpResult`] (200), ou erro.
-    async fn op(&self, method: &str, path: &str, body: Option<Value>) -> Result<OpResult, SdkError> {
+    async fn op(
+        &self,
+        method: &str,
+        path: &str,
+        body: Option<Value>,
+    ) -> Result<OpResult, SdkError> {
         let raw = match body {
             Some(v) => Some(
-                serde_json::to_vec(&v).map_err(|e| SdkError::Transport(format!("serializar: {e}")))?,
+                serde_json::to_vec(&v)
+                    .map_err(|e| SdkError::Transport(format!("serializar: {e}")))?,
             ),
             None => None,
         };
@@ -274,7 +277,11 @@ impl MgmtClient {
     pub async fn image_delete(&self, reference: &str) -> Result<OpResult, SdkError> {
         // `remove` devolve `{result}`, não `{ok,output}` — adapta-se aqui.
         let (st, body) = self
-            .request("DELETE", &format!("/v1/images?ref={}", enc(reference)), None)
+            .request(
+                "DELETE",
+                &format!("/v1/images?ref={}", enc(reference)),
+                None,
+            )
             .await?;
         if st == 200 {
             let v: Value = decode(&body)?;
@@ -283,17 +290,27 @@ impl MgmtClient {
                 .and_then(|r| r.as_str())
                 .unwrap_or_default()
                 .to_string();
-            Ok(OpResult { ok: true, output: out })
+            Ok(OpResult {
+                ok: true,
+                output: out,
+            })
         } else {
             let e = http_error(st, &body);
             let msg = match &e {
                 SdkError::Http { message, .. } => message.clone(),
                 other => other.to_string(),
             };
-            Ok(OpResult { ok: false, output: msg })
+            Ok(OpResult {
+                ok: false,
+                output: msg,
+            })
         }
     }
-    pub async fn image_pull(&self, reference: &str, scan_after: bool) -> Result<OpResult, SdkError> {
+    pub async fn image_pull(
+        &self,
+        reference: &str,
+        scan_after: bool,
+    ) -> Result<OpResult, SdkError> {
         let body = serde_json::json!({ "ref": reference, "scan_after": scan_after });
         self.op("POST", "/v1/images/pull", Some(body)).await
     }
@@ -302,8 +319,12 @@ impl MgmtClient {
         self.op("POST", "/v1/images/build", Some(body)).await
     }
     pub async fn image_scan(&self, reference: &str) -> Result<OpResult, SdkError> {
-        self.op("GET", &format!("/v1/images/scan?ref={}", enc(reference)), None)
-            .await
+        self.op(
+            "GET",
+            &format!("/v1/images/scan?ref={}", enc(reference)),
+            None,
+        )
+        .await
     }
     /// SBOM (`Some(Value)` array de pacotes, `None` se a imagem não existir).
     pub async fn image_sbom(&self, reference: &str) -> Result<Option<Value>, SdkError> {
@@ -313,8 +334,12 @@ impl MgmtClient {
 
     // Redes
     pub async fn network_create(&self, name: &str) -> Result<OpResult, SdkError> {
-        self.op("POST", "/v1/networks", Some(serde_json::json!({ "name": name })))
-            .await
+        self.op(
+            "POST",
+            "/v1/networks",
+            Some(serde_json::json!({ "name": name })),
+        )
+        .await
     }
     pub async fn network_delete(&self, name: &str) -> Result<OpResult, SdkError> {
         self.op("DELETE", &format!("/v1/networks/{}", enc(name)), None)
@@ -366,7 +391,10 @@ mod tests {
 
     #[test]
     fn connect_normaliza_o_prefixo_unix() {
-        assert_eq!(MgmtClient::connect("unix:///run/x.sock").sock, "/run/x.sock");
+        assert_eq!(
+            MgmtClient::connect("unix:///run/x.sock").sock,
+            "/run/x.sock"
+        );
         assert_eq!(MgmtClient::connect("/run/x.sock").sock, "/run/x.sock");
     }
 
